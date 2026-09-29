@@ -1,0 +1,227 @@
+<UserControl x:Class="LabStock.Views.ReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="750" d:DesignWidth="1100" Background="#F8FAFC">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Отчёты, аналитика и экспорт данных" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+            <TextBlock Text="Формирование регламентированных ежедневных и ежемесячных отчётов, экспорт в PDF и Excel" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0"/>
+        </StackPanel>
+
+        <!-- Toast Status Banner -->
+        <Border Grid.Row="1" Background="#DCFCE7" CornerRadius="6" Padding="10" Margin="0,0,0,14"
+                Visibility="{Binding StatusMessage, Converter={StaticResource NullToVisibilityConverter}, FallbackValue=Collapsed}">
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#15803D" FontWeight="SemiBold" FontSize="12"/>
+        </Border>
+
+        <!-- Main Tab Control -->
+        <TabControl Grid.Row="2" SelectedIndex="{Binding SelectedTabIndex}" Background="Transparent" BorderThickness="0">
+            <!-- TAB 1: Ежедневный отчёт -->
+            <TabItem Header="📅 Ежедневный отчёт" FontSize="13" FontWeight="SemiBold">
+                <Grid Margin="0,14,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Date picker & export buttons -->
+                    <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="Дата отчёта:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                            <DatePicker Grid.Column="1" SelectedDate="{Binding DailyDate}" Height="36"/>
+                            <Button Grid.Column="2" Content="🔄 Сформировать" Command="{Binding RefreshDailyCommand}" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0" Height="36"/>
+
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="📄 Экспорт в PDF" Command="{Binding ExportDailyPdfCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,10,0" Height="36"/>
+                                <Button Content="📊 Экспорт в Excel (.xlsx)" Command="{Binding ExportDailyExcelCommand}" Style="{StaticResource SuccessButton}" Height="36"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Daily Table -->
+                    <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Background="#F1F5F9" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Всего анализов за день: " FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding DailyReport.TotalAnalysesPerformed}" FontWeight="Bold" Foreground="{StaticResource PrimaryDark}"/>
+                                    <TextBlock Text=" | Позиций с движением: " FontWeight="SemiBold" Margin="20,0,0,0"/>
+                                    <TextBlock Text="{Binding DailyReport.Items.Count}" FontWeight="Bold" Foreground="{StaticResource AccentTeal}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding DailyReport.Items}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Материал" Binding="{Binding MaterialName}" Width="2.5*"/>
+                                    <DataGridTextColumn Header="Ед." Binding="{Binding Unit}" Width="60"/>
+                                    <DataGridTextColumn Header="Остаток на начало" Binding="{Binding InitialStock, StringFormat={}{0:0.##}}" Width="140"/>
+                                    <DataGridTextColumn Header="Поступления (+)" Binding="{Binding Receipts, StringFormat={}{0:0.##}}" Width="130"/>
+                                    <DataGridTextColumn Header="Расход (анализы) (-)" Binding="{Binding AnalysisConsumption, StringFormat={}{0:0.##}}" Width="150"/>
+                                    <DataGridTextColumn Header="Ручные списания (-)" Binding="{Binding ManualWriteoffs, StringFormat={}{0:0.##}}" Width="150"/>
+                                    <DataGridTextColumn Header="Остаток на конец дня" Binding="{Binding FinalStock, StringFormat={}{0:0.##}}" Width="160"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 2: Ежемесячный отчёт -->
+            <TabItem Header="📊 Ежемесячный отчёт" FontSize="13" FontWeight="SemiBold">
+                <Grid Margin="0,14,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Month selector & export -->
+                    <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="Месяц и год:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding Months}" SelectedItem="{Binding SelectedMonth}"/>
+                            <ComboBox Grid.Column="3" ItemsSource="{Binding Years}" SelectedItem="{Binding SelectedYear}"/>
+                            <Button Grid.Column="4" Content="🔄 Сформировать" Command="{Binding RefreshMonthlyCommand}" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0" Height="36"/>
+
+                            <Button Grid.Column="5" Content="📊 Экспорт отчёта в Excel (.xlsx)" Command="{Binding ExportMonthlyExcelCommand}" Style="{StaticResource SuccessButton}" HorizontalAlignment="Right" Height="36"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- High level summary cards -->
+                    <Grid Grid.Row="1" Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Всего анализов за месяц" FontSize="11" Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding MonthlyReport.TotalAnalyses}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Стоимость поступивших закупок" FontSize="11" Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding MonthlyReport.TotalReceiptsCost, StringFormat={}{0:N2} сомони}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource AccentTeal}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Текущая оценка стоимости склада" FontSize="11" Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding MonthlyReport.TotalWarehouseValuation, StringFormat={}{0:N2} сомони}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryDark}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Top Materials & Daily Timeline -->
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="1.2*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Top Materials -->
+                        <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Топ самых используемых материалов:" FontWeight="Bold" FontSize="13" Margin="0,0,0,10"/>
+                                <DataGrid ItemsSource="{Binding MonthlyReport.TopMaterials}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="320">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Материал" Binding="{Binding MaterialName}" Width="2*"/>
+                                        <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="1.2*"/>
+                                        <DataGridTextColumn Header="Расход" Binding="{Binding QuantityUsed, StringFormat={}{0:0.##}}" Width="80"/>
+                                        <DataGridTextColumn Header="Ед." Binding="{Binding Unit}" Width="50"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Daily Timeline -->
+                        <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Динамика по дням месяца:" FontWeight="Bold" FontSize="13" Margin="0,0,0,10"/>
+                                <DataGrid ItemsSource="{Binding MonthlyReport.DailyTimeline}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="320">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Дата" Binding="{Binding Date, StringFormat={}{0:dd.MM.yyyy}}" Width="120"/>
+                                        <DataGridTextColumn Header="Выполнено анализов" Binding="{Binding AnalysesCount}" Width="160"/>
+                                        <DataGridTextColumn Header="Расход расходников" Binding="{Binding MaterialsUsed, StringFormat={}{0:0.##}}" Width="160"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 3: Аналитика и прогнозы -->
+            <TabItem Header="📈 Аналитика и прогнозы запасов" FontSize="13" FontWeight="SemiBold">
+                <Grid Margin="0,14,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" Margin="0,0,0,14">
+                        <Grid>
+                            <TextBlock Text="Расчётный прогноз истощения запасов (Runway) и рекомендации по закупкам:" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            <Button Content="🔄 Пересчитать аналитику" Command="{Binding RefreshPredictionsCommand}" HorizontalAlignment="Right" Style="{StaticResource PrimaryButton}"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                        <DataGrid ItemsSource="{Binding Predictions}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Материал" Binding="{Binding MaterialName}" Width="2*"/>
+                                <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="1.2*"/>
+                                <DataGridTextColumn Header="Текущий остаток" Binding="{Binding CurrentStock, StringFormat={}{0:0.##}}" Width="120"/>
+                                <DataGridTextColumn Header="Ед." Binding="{Binding Unit}" Width="50"/>
+                                <DataGridTextColumn Header="Расход/день" Binding="{Binding DailyAvgConsumption, StringFormat={}{0:0.##}}" Width="100"/>
+                                <DataGridTextColumn Header="Расход/мес." Binding="{Binding MonthlyAvgConsumption, StringFormat={}{0:0.##}}" Width="100"/>
+                                <DataGridTextColumn Header="Дней до исчерпания" Binding="{Binding DaysUntilDepletion}" Width="150"/>
+                                <DataGridTextColumn Header="Рекомендуемый заказ" Binding="{Binding RecommendedOrderQuantity, StringFormat={}{0:0.##}}" Width="160"/>
+                                <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

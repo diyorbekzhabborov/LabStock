@@ -1,0 +1,31 @@
+## Build and binary outputs
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio & IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Database & runtime files
+*.db
+*.db-shm
+*.db-wal
+Backups/
+
+## Test results
+TestResults/
+*.trx
+*.coverage
+
+## OS generated
+[Tt]humbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+.DS_Store

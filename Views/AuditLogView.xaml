@@ -1,0 +1,51 @@
+<UserControl x:Class="LabStock.Views.AuditLogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1100" Background="#F8FAFC">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Журнал аудита действий пользователей" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="Неизменяемый реестр событий безопасности: авторизации, модификации справочников, операции списания и бэкапы" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Search Bar -->
+        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="12" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Height="36"/>
+                <TextBlock Text="🔍 Фильтр аудита по действию, сотруднику, объекту..." FontSize="12" Foreground="{StaticResource TextMuted}" 
+                           IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center"
+                           Visibility="{Binding SearchText, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                <Button Grid.Column="1" Content="🔄 Обновить" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0" Height="36"/>
+            </Grid>
+        </Border>
+
+        <!-- Audit Log Grid -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="12" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+            <DataGrid ItemsSource="{Binding Logs}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Время события" Binding="{Binding Timestamp, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" Width="150"/>
+                    <DataGridTextColumn Header="Действие" Binding="{Binding Action}" Width="150"/>
+                    <DataGridTextColumn Header="Раздел / Объект" Binding="{Binding EntityName}" Width="150"/>
+                    <DataGridTextColumn Header="Пользователь" Binding="{Binding User.FullName}" Width="200"/>
+                    <DataGridTextColumn Header="Детализация операции" Binding="{Binding Details}" Width="3*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

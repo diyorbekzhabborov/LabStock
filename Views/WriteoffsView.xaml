@@ -1,0 +1,102 @@
+<UserControl x:Class="LabStock.Views.WriteoffsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1100" Background="#F8FAFC">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Ручное списание материалов" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="Оформление актов списания по браку, бою, истечению срока годности или контролю качества" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="➕ Оформить списание" Command="{Binding OpenCreateCommand}" Style="{StaticResource DangerButton}" Margin="0,0,8,0"/>
+                <Button Content="🔄 Обновить" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButton}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- DataGrid -->
+        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="12" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+            <DataGrid ItemsSource="{Binding Writeoffs}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="№ Акта" Binding="{Binding WriteoffNumber}" Width="140"/>
+                    <DataGridTextColumn Header="Дата" Binding="{Binding Date, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="140"/>
+                    <DataGridTextColumn Header="Материал" Binding="{Binding Material.Name}" Width="2*"/>
+                    <DataGridTextColumn Header="Партия" Binding="{Binding Lot.LotNumber}" Width="120"/>
+                    <DataGridTextColumn Header="Списано" Binding="{Binding Quantity, StringFormat={}{0:0.##}}" Width="90"/>
+                    <DataGridTextColumn Header="Ед." Binding="{Binding Material.Unit.ShortName}" Width="60"/>
+                    <DataGridTextColumn Header="Причина списания" Binding="{Binding Reason}" Width="1.5*"/>
+                    <DataGridTextColumn Header="Сотрудник" Binding="{Binding User.FullName}" Width="1.5*"/>
+                    <DataGridTextColumn Header="Примечание" Binding="{Binding Notes}" Width="2*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Create Writeoff Modal Overlay -->
+        <Grid Grid.RowSpan="2" Background="#80000000" Visibility="{Binding IsCreateOpen, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
+            <Border Width="550" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Background="White" CornerRadius="12" Padding="28"
+                    BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="6" Opacity="0.2"/>
+                </Border.Effect>
+
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <TextBlock Text="Оформление ручного списания" FontSize="18" FontWeight="Bold" Foreground="#B91C1C"/>
+                        <Button Content="✕" Command="{Binding CancelCreateCommand}" HorizontalAlignment="Right" Style="{StaticResource SecondaryButton}" Padding="8,4" BorderThickness="0"/>
+                    </Grid>
+
+                    <!-- Error message banner -->
+                    <Border Background="#FEE2E2" CornerRadius="6" Padding="10" Margin="0,0,0,14"
+                            Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <!-- Material selection -->
+                    <TextBlock Text="Материал для списания:" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Materials}" SelectedValue="{Binding SelectedMaterialId}" SelectedValuePath="Id" DisplayMemberPath="Name" Height="36" Margin="0,0,0,14"/>
+
+                    <!-- Lot selection -->
+                    <TextBlock Text="Конкретная партия (оставьте пустым для автосписания FEFO):" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding AvailableLots}" SelectedValue="{Binding SelectedLotId}" SelectedValuePath="Id" DisplayMemberPath="LotNumber" Height="36" Margin="0,0,0,14"/>
+
+                    <!-- Quantity -->
+                    <TextBlock Text="Количество к списанию:" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,14"/>
+
+                    <!-- Reason -->
+                    <TextBlock Text="Официальная причина списания:" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Reasons}" SelectedItem="{Binding Reason}" Height="36" Margin="0,0,0,14"/>
+
+                    <!-- Notes -->
+                    <TextBlock Text="Подробное обоснование / акт:" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" Margin="0,0,0,20"/>
+
+                    <!-- Buttons -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Отмена" Command="{Binding CancelCreateCommand}" Style="{StaticResource SecondaryButton}" Height="40"/>
+                        <Button Grid.Column="2" Content="Подтвердить списание" Command="{Binding SaveWriteoffCommand}" Style="{StaticResource DangerButton}" Height="40"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

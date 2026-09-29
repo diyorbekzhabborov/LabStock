@@ -1,0 +1,124 @@
+<UserControl x:Class="LabStock.Views.WarehouseView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="750" d:DesignWidth="1100" Background="#F8FAFC">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="240"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Склад и остатки материалов" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="Контроль запасов, детализация по партиям и срокам годности (FEFO)" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Filter Bar -->
+        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="1.5*"/>
+                    <ColumnDefinition Width="1.5*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Search -->
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                    <TextBlock Text="Поиск (название, артикул, штрихкод, партия, стеллаж):" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Height="36"/>
+                </StackPanel>
+
+                <!-- Category -->
+                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                    <TextBlock Text="Категория:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" DisplayMemberPath="Name"/>
+                </StackPanel>
+
+                <!-- Status -->
+                <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                    <TextBlock Text="Статус остатка:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Statuses}" SelectedItem="{Binding SelectedStatus}" DisplayMemberPath="Title"/>
+                </StackPanel>
+
+                <!-- Clear -->
+                <Button Grid.Column="3" Content="Сбросить фильтры" Command="{Binding ClearFiltersCommand}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Bottom" Height="36"/>
+            </Grid>
+        </Border>
+
+        <!-- Materials Grid -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="12" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" Margin="0,0,0,14">
+            <DataGrid ItemsSource="{Binding Materials}" SelectedItem="{Binding SelectedMaterial, Mode=TwoWay}"
+                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Артикул" Binding="{Binding Article}" Width="100"/>
+                    <DataGridTextColumn Header="Наименование материала" Binding="{Binding Name}" Width="2.5*"/>
+                    <DataGridTextColumn Header="Категория" Binding="{Binding Category.Name}" Width="1.5*"/>
+                    <DataGridTextColumn Header="Место хранения" Binding="{Binding StorageLocation}" Width="1.5*"/>
+                    <DataGridTextColumn Header="Остаток" Binding="{Binding TotalStock, StringFormat={}{0:0.##}}" Width="90"/>
+                    <DataGridTextColumn Header="Ед." Binding="{Binding Unit.ShortName}" Width="60"/>
+                    <DataGridTextColumn Header="Мин." Binding="{Binding MinQuantity, StringFormat={}{0:0.##}}" Width="70"/>
+                    <DataGridTextColumn Header="Макс." Binding="{Binding MaxQuantity, StringFormat={}{0:0.##}}" Width="70"/>
+                    <DataGridTemplateColumn Header="Статус" Width="130">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding Status, Converter={StaticResource StatusToBackgroundConverter}}" CornerRadius="4" Padding="8,3" HorizontalAlignment="Left">
+                                    <TextBlock Text="{Binding Status, Converter={StaticResource StatusToTextConverter}}" 
+                                               Foreground="{Binding Status, Converter={StaticResource StatusToForegroundConverter}}" 
+                                               FontWeight="SemiBold" FontSize="11"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Selected Material Lots Detail Pane -->
+        <Border Grid.Row="3" Background="White" CornerRadius="8" Padding="16" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Детализация партий для: " FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock Text="{Binding SelectedMaterial.Name}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource PrimaryDark}" Margin="6,0,0,0"/>
+                        <TextBlock Text=" (Сортировка FEFO: сначала с ближайшим сроком)" FontSize="11" Foreground="{StaticResource TextMuted}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
+                <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedMaterialLots}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Номер партии" Binding="{Binding LotNumber}" Width="130"/>
+                        <DataGridTextColumn Header="Текущий остаток" Binding="{Binding CurrentQuantity, StringFormat={}{0:0.##}}" Width="120"/>
+                        <DataGridTextColumn Header="Начальное кол-во" Binding="{Binding InitialQuantity, StringFormat={}{0:0.##}}" Width="120"/>
+                        <DataGridTextColumn Header="Дата поступления" Binding="{Binding ReceivedDate, StringFormat={}{0:dd.MM.yyyy}}" Width="130"/>
+                        <DataGridTextColumn Header="Срок годности" Binding="{Binding ExpiryDate, StringFormat={}{0:dd.MM.yyyy}}" Width="120"/>
+                        <DataGridTemplateColumn Header="Дней до конца" Width="110">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DaysToExpiry}" FontWeight="Bold"
+                                               Foreground="{Binding IsExpired, Converter={StaticResource BooleanToBrushConverter}, FallbackValue=Black}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Цена закупки" Binding="{Binding PurchasePrice, StringFormat={}{0:N2} сомони}" Width="120"/>
+                        <DataGridTextColumn Header="Поставщик" Binding="{Binding Supplier.Name}" Width="1.5*"/>
+                        <DataGridTextColumn Header="Место хранения" Binding="{Binding StorageLocation}" Width="1.5*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

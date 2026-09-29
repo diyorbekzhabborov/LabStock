@@ -1,0 +1,216 @@
+<UserControl x:Class="LabStock.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1100" Background="#F8FAFC">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="24">
+            <!-- Header bar -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Обзор лаборатории (Dashboard)" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                    <TextBlock Text="Оперативные показатели, контроль критических остатков и быстрые действия" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="🔄 Обновить данные" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButton}"/>
+            </Grid>
+
+            <!-- Quick Actions Toolbar -->
+            <Border Background="White" CornerRadius="8" Padding="14,12" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" Margin="0,0,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Быстрые действия:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{StaticResource PrimaryDark}"/>
+                    <WrapPanel Grid.Column="1">
+                        <Button Content="⚡ Выполнить анализ" Command="{Binding NavigateToRunAnalysisCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,10,0"/>
+                        <Button Content="📥 Поступление (Приход)" Command="{Binding NavigateToReceiptCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
+                        <Button Content="📤 Ручное списание" Command="{Binding NavigateToWriteoffCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
+                        <Button Content="📊 Отчёт за сегодня" Command="{Binding NavigateToDailyReportCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
+                        <Button Content="🔔 Все уведомления" Command="{Binding NavigateToNotificationsCommand}" Style="{StaticResource SecondaryButton}"/>
+                    </WrapPanel>
+                </Grid>
+            </Border>
+
+            <!-- 6 Key Stat Cards Grid -->
+            <Grid Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Card 1: Всего позиций -->
+                <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Всего позиций" FontSize="11" Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.TotalMaterialsCount}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,4,0,0"/>
+                        <TextBlock Text="уникальных наименований" FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 2: Общий остаток -->
+                <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Общий остаток" FontSize="11" Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.TotalStockSum, StringFormat={}{0:N0}}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" Margin="0,4,0,0"/>
+                        <TextBlock Text="суммарный запас единиц" FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 3: Низкий остаток -->
+                <Border Grid.Column="4" Background="White" CornerRadius="8" Padding="14" BorderBrush="#FECACA" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Низкий остаток" FontSize="11" Foreground="#B91C1C" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.LowStockCount}" FontSize="24" FontWeight="Bold" Foreground="#DC2626" Margin="0,4,0,0"/>
+                        <TextBlock Text="позиций ниже нормы" FontSize="10" Foreground="#EF4444" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 4: Истекает срок -->
+                <Border Grid.Column="6" Background="White" CornerRadius="8" Padding="14" BorderBrush="#FEF08A" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Истекает срок" FontSize="11" Foreground="#B45309" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.ExpiringLotsCount}" FontSize="24" FontWeight="Bold" Foreground="#D97706" Margin="0,4,0,0"/>
+                        <TextBlock Text="партий с близким сроком" FontSize="10" Foreground="#F59E0B" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 5: Использовано сегодня -->
+                <Border Grid.Column="8" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Использовано сегодня" FontSize="11" Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.UsedTodayCount, StringFormat={}{0:0.##}}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource AccentTeal}" Margin="0,4,0,0"/>
+                        <TextBlock Text="единиц списано" FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 6: Анализов сегодня -->
+                <Border Grid.Column="10" Background="White" CornerRadius="8" Padding="14" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Анализов сегодня" FontSize="11" Foreground="{StaticResource TextSecondary}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.AnalysesTodayCount}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryDark}" Margin="0,4,0,0"/>
+                        <TextBlock Text="исследований проведено" FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Main Content: Critical items + Weekly trend chart -->
+            <Grid Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.4*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Critical Materials Table -->
+                <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="18" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,14">
+                            <TextBlock Text="⚠️ Критические позиции и дефицит" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                            <Button Content="Открыть склад →" Command="{Binding NavigateToReceiptCommand}" HorizontalAlignment="Right" Style="{StaticResource SecondaryButton}" Padding="8,4" FontSize="11"/>
+                        </Grid>
+
+                        <DataGrid ItemsSource="{Binding Stats.CriticalMaterials}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="280">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Материал" Binding="{Binding Name}" Width="2*"/>
+                                <DataGridTextColumn Header="Категория" Binding="{Binding Category.Name}" Width="1.2*"/>
+                                <DataGridTextColumn Header="Остаток" Binding="{Binding TotalStock, StringFormat={}{0:0.##}}" Width="*"/>
+                                <DataGridTextColumn Header="Мин." Binding="{Binding MinQuantity, StringFormat={}{0:0.##}}" Width="0.8*"/>
+                                <DataGridTemplateColumn Header="Статус" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding Status, Converter={StaticResource StatusToBackgroundConverter}}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding Status, Converter={StaticResource StatusToTextConverter}}" 
+                                                           Foreground="{Binding Status, Converter={StaticResource StatusToForegroundConverter}}" 
+                                                           FontWeight="SemiBold" FontSize="11"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- 7-Day Trend Chart -->
+                <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="18" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="📊 Динамика расхода (7 дней)" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,16"/>
+
+                        <ItemsControl ItemsSource="{Binding Stats.DailyTrends}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="45"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="70"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding DateLabel}" FontSize="11" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
+                                        <!-- Visual Bar -->
+                                        <Border Grid.Column="1" Height="14" Background="#F1F5F9" CornerRadius="3" Margin="8,0" HorizontalAlignment="Stretch">
+                                            <Border Background="{StaticResource PrimaryColor}" HorizontalAlignment="Left" CornerRadius="3" MinWidth="4"
+                                                    Width="{Binding AnalysesCount, Converter={StaticResource MultiplierConverter}, ConverterParameter=8, FallbackValue=20}"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding AnalysesCount}" FontWeight="Bold" FontSize="11" Foreground="{StaticResource PrimaryDark}"/>
+                                            <TextBlock Text=" ан." FontSize="10" Foreground="{StaticResource TextMuted}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Recent Warehouse Movements Stream -->
+            <Border Background="White" CornerRadius="8" Padding="18" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="🕒 Последние складские операции" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,12"/>
+
+                    <DataGrid ItemsSource="{Binding Stats.RecentMovements}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="240">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Дата/Время" Binding="{Binding Date, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="120"/>
+                            <DataGridTextColumn Header="Материал" Binding="{Binding Material.Name}" Width="2*"/>
+                            <DataGridTemplateColumn Header="Операция" Width="130">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding OperationType, Converter={StaticResource MovementTypeToTextConverter}}" FontWeight="SemiBold" FontSize="12"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Количество" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Quantity, Converter={StaticResource QuantityDeltaTextConverter}}" 
+                                                   Foreground="{Binding Quantity, Converter={StaticResource QuantityDeltaColorConverter}}"
+                                                   FontWeight="Bold" FontSize="12"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Остаток" Binding="{Binding BalanceAfter, StringFormat={}{0:0.##}}" Width="90"/>
+                            <DataGridTextColumn Header="Сотрудник" Binding="{Binding User.FullName}" Width="1.5*"/>
+                            <DataGridTextColumn Header="Примечание" Binding="{Binding Notes}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

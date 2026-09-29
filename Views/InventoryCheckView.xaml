@@ -1,0 +1,106 @@
+<UserControl x:Class="LabStock.Views.InventoryCheckView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1100" Background="#F8FAFC">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="120"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Инвентаризация и сверка остатков" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="Сверка фактического наличия с учетными данными, фиксация расхождений и создание корректировок" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0"/>
+            </StackPanel>
+            <Button Grid.Column="1" Content="🔄 Сбросить к системным" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButton}"/>
+        </Grid>
+
+        <!-- Status Toast -->
+        <Border Grid.Row="1" CornerRadius="6" Padding="12" Margin="0,0,0,14"
+                Visibility="{Binding StatusMessage, Converter={StaticResource NullToVisibilityConverter}, FallbackValue=Collapsed}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#DCFCE7"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSuccess}" Value="False">
+                            <Setter Property="Background" Value="#FEE2E2"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="12">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="#15803D"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSuccess}" Value="False">
+                                <Setter Property="Foreground" Value="#B91C1C"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Border>
+
+        <!-- Inventory Items Grid -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="12" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" Margin="0,0,0,14">
+            <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Материал" Binding="{Binding MaterialName}" IsReadOnly="True" Width="2.5*"/>
+                    <DataGridTextColumn Header="Категория" Binding="{Binding CategoryName}" IsReadOnly="True" Width="1.5*"/>
+                    <DataGridTextColumn Header="Место хранения" Binding="{Binding StorageLocation}" IsReadOnly="True" Width="1.5*"/>
+                    <DataGridTextColumn Header="Учетный остаток" Binding="{Binding SystemQuantity, StringFormat={}{0:0.##}}" IsReadOnly="True" Width="130"/>
+                    <DataGridTextColumn Header="Ед." Binding="{Binding UnitName}" IsReadOnly="True" Width="60"/>
+                    <DataGridTextColumn Header="Фактический остаток" Binding="{Binding ActualQuantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                    <DataGridTemplateColumn Header="Расхождение" Width="130">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Difference, Converter={StaticResource QuantityDeltaTextConverter}}"
+                                           Foreground="{Binding Difference, Converter={StaticResource QuantityDeltaColorConverter}}"
+                                           FontWeight="Bold" FontSize="12"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Причина (обязательно)" Binding="{Binding Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Bottom Action Bar for Selected Item -->
+        <Border Grid.Row="3" Background="White" CornerRadius="8" Padding="18" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Выбранная позиция: " FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock Text="{Binding SelectedItem.MaterialName}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource PrimaryDark}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <TextBlock Text="Системный: " FontSize="12" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock Text="{Binding SelectedItem.SystemQuantity, StringFormat={}{0:0.##}}" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text=" | Факт: " FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="10,0,0,0"/>
+                        <TextBlock Text="{Binding SelectedItem.ActualQuantity, StringFormat={}{0:0.##}}" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text=" | Разница: " FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="10,0,0,0"/>
+                        <TextBlock Text="{Binding SelectedItem.Difference, StringFormat={}{0:+0.##;-0.##;0}}" FontWeight="Bold" FontSize="12" Foreground="{Binding SelectedItem.Difference, Converter={StaticResource QuantityDeltaColorConverter}}"/>
+                    </StackPanel>
+                </StackPanel>
+                <Button Grid.Column="1" Content="⚖️ Провести корректировку остатка" Command="{Binding ApplyAdjustmentCommand}" Style="{StaticResource PrimaryButton}" Height="44" Padding="20,0" FontSize="13"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

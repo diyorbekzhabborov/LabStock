@@ -1,0 +1,175 @@
+<UserControl x:Class="LabStock.Views.RunAnalysisView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1050" Background="#F8FAFC">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Выполнение лабораторного анализа (Списание расходников)" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+            <TextBlock Text="Автоматический расчет потребности по нормам и FEFO-списание с партий" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0"/>
+        </StackPanel>
+
+        <!-- Main Form & Preview Split -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="380"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Panel: Input Controls -->
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="20" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Параметры выполнения" FontSize="16" FontWeight="Bold" Foreground="{StaticResource PrimaryDark}" Margin="0,0,0,16"/>
+
+                    <!-- Analysis Selector -->
+                    <TextBlock Text="Лабораторный анализ:" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <ComboBox ItemsSource="{Binding Analyses}" SelectedItem="{Binding SelectedAnalysis}" DisplayMemberPath="Name" Margin="0,0,0,16"/>
+
+                    <!-- Analysis Code and Category badge -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Код исследования:" FontSize="10" Foreground="{StaticResource TextMuted}"/>
+                            <TextBlock Text="{Binding SelectedAnalysis.Code}" FontWeight="Bold" FontSize="13" Foreground="{StaticResource PrimaryColor}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Категория:" FontSize="10" Foreground="{StaticResource TextMuted}"/>
+                            <TextBlock Text="{Binding SelectedAnalysis.Category}" FontWeight="SemiBold" FontSize="13"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Count input with quick increment / buttons -->
+                    <TextBlock Text="Количество выполненных анализов:" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="42"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="42"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="-" Command="{Binding DecrementCountCommand}" Style="{StaticResource SecondaryButton}" FontSize="18" FontWeight="Bold"/>
+                        <TextBox Grid.Column="1" Text="{Binding AnalysisCount, UpdateSourceTrigger=PropertyChanged}" 
+                                 HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="18" Margin="6,0"/>
+                        <Button Grid.Column="2" Content="+" Command="{Binding IncrementCountCommand}" Style="{StaticResource SecondaryButton}" FontSize="18" FontWeight="Bold"/>
+                    </Grid>
+
+                    <!-- Quick Count Presets -->
+                    <WrapPanel Margin="0,0,0,16">
+                        <Button Content="+5" Command="{Binding QuickCountCommand}" CommandParameter="5" Style="{StaticResource SecondaryButton}" Padding="8,3" Margin="0,0,6,0" FontSize="11"/>
+                        <Button Content="+10" Command="{Binding QuickCountCommand}" CommandParameter="10" Style="{StaticResource SecondaryButton}" Padding="8,3" Margin="0,0,6,0" FontSize="11"/>
+                        <Button Content="+25" Command="{Binding QuickCountCommand}" CommandParameter="25" Style="{StaticResource SecondaryButton}" Padding="8,3" Margin="0,0,6,0" FontSize="11"/>
+                        <Button Content="+50" Command="{Binding QuickCountCommand}" CommandParameter="50" Style="{StaticResource SecondaryButton}" Padding="8,3" FontSize="11"/>
+                    </WrapPanel>
+
+                    <!-- Operator -->
+                    <TextBlock Text="Ответственный сотрудник (Лаборант):" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <Border Background="#F1F5F9" CornerRadius="6" Padding="10,8" Margin="0,0,0,16">
+                        <TextBlock Text="{Binding CurrentOperatorName}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" FontSize="12"/>
+                    </Border>
+
+                    <!-- Notes -->
+                    <TextBlock Text="Примечание (№ пробы, смена, комментарий):" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,20"/>
+
+                    <!-- Action Button -->
+                    <Button Content="⚡ Подтвердить и списать материалы" 
+                            Command="{Binding ConfirmExecutionCommand}" 
+                            Style="{StaticResource PrimaryButton}" 
+                            Height="46" FontSize="14" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Right Panel: Consumption Preview & Stock check -->
+            <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="20" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Предварительный расчёт расхода материалов" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,12"/>
+
+                    <!-- Status Notification Banner -->
+                    <Border Grid.Row="1" CornerRadius="6" Padding="12" Margin="0,0,0,14"
+                            Visibility="{Binding StatusMessage, Converter={StaticResource NullToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FEF3C7"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSuccessMessage}" Value="True">
+                                        <Setter Property="Background" Value="#DCFCE7"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#B45309"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSuccessMessage}" Value="True">
+                                            <Setter Property="Foreground" Value="#15803D"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+
+                    <!-- Consumption Recipe Breakdown Grid -->
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding PreviewItems}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Материал" Binding="{Binding MaterialName}" Width="2*"/>
+                            <DataGridTextColumn Header="Норма на 1 ан." Binding="{Binding NormPerAnalysis, StringFormat={}{0:0.##}}" Width="110"/>
+                            <DataGridTextColumn Header="Суммарная потребность" Binding="{Binding TotalRequired, StringFormat={}{0:0.##}}" Width="150"/>
+                            <DataGridTextColumn Header="Ед. изм." Binding="{Binding UnitName}" Width="80"/>
+                            <DataGridTextColumn Header="Текущий остаток" Binding="{Binding AvailableStock, StringFormat={}{0:0.##}}" Width="130"/>
+                            <DataGridTemplateColumn Header="Наличие на складе" Width="1.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="4" Padding="8,3" HorizontalAlignment="Left">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#DCFCE7"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasShortage}" Value="True">
+                                                            <Setter Property="Background" Value="#FEE2E2"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" FontSize="11">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="#15803D"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasShortage}" Value="True">
+                                                                <Setter Property="Foreground" Value="#B91C1C"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
