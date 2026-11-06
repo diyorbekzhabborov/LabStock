@@ -29,7 +29,9 @@ namespace LabStock.Data
                 }
                 catch { }
 
-                if (context.Users.Any())
+                EnsureCustomerAccountsAndItems(context);
+
+                if (context.Users.Any(u => u.Username == "admin"))
                 {
                     return; // Database already seeded
                 }
@@ -568,6 +570,151 @@ namespace LabStock.Data
             });
 
             context.SaveChanges();
+            }
+        }
+
+        public static void EnsureCustomerAccountsAndItems(AppDbContext context)
+        {
+            // 1. Ensure abdullojon and darmongoh exist
+            if (!context.Users.Any(u => u.Username == "abdullojon"))
+            {
+                context.Users.Add(new User
+                {
+                    Username = "abdullojon",
+                    FullName = "Ҷабборов Абдуллоҷон",
+                    Role = UserRole.Admin,
+                    PasswordHash = HashPassword("jabborov"),
+                    CreatedAt = DateTime.Now
+                });
+            }
+
+            if (!context.Users.Any(u => u.Username == "darmongoh"))
+            {
+                context.Users.Add(new User
+                {
+                    Username = "darmongoh",
+                    FullName = "Бухгалтер (Дармонгох)",
+                    Role = UserRole.HeadOfLab,
+                    PasswordHash = HashPassword("qwer1234"),
+                    CreatedAt = DateTime.Now
+                });
+            }
+            context.SaveChanges();
+
+            // 2. Units & Category for real items
+            var unitMl = context.Units.FirstOrDefault(u => u.ShortName == "мл") ?? new Unit { Name = "Миллилитр", ShortName = "мл" };
+            var unitPcs = context.Units.FirstOrDefault(u => u.ShortName == "шт.") ?? new Unit { Name = "Штука", ShortName = "шт." };
+            var unitPack = context.Units.FirstOrDefault(u => u.ShortName == "упак.") ?? new Unit { Name = "Упаковка", ShortName = "упак." };
+            var unitStrips = context.Units.FirstOrDefault(u => u.ShortName == "тест-полоски") ?? new Unit { Name = "Тест-полоски", ShortName = "тест-полоски" };
+
+            if (unitMl.Id == 0) context.Units.Add(unitMl);
+            if (unitPcs.Id == 0) context.Units.Add(unitPcs);
+            if (unitPack.Id == 0) context.Units.Add(unitPack);
+            if (unitStrips.Id == 0) context.Units.Add(unitStrips);
+            context.SaveChanges();
+
+            var catBio = context.Categories.FirstOrDefault(c => c.Name.Contains("биохим") || c.Name.Contains("Реагенты"))
+                ?? context.Categories.FirstOrDefault()
+                ?? new Category { Name = "Клинические реагенты" };
+            if (catBio.Id == 0) { context.Categories.Add(catBio); context.SaveChanges(); }
+
+            var sup = context.Suppliers.FirstOrDefault(s => s.Name.Contains("Абдулло") || s.Name.Contains("Диагностика"))
+                ?? new Supplier { Name = "Абдуллочон", ContactPerson = "Ҷабборов Абдуллоҷон" };
+            if (sup.Id == 0) { context.Suppliers.Add(sup); context.SaveChanges(); }
+
+            // 3. 42 Clinical items from backup
+            var itemsData = new (string Sku, string Name, string UnitStr, decimal Stock, decimal MinQty, string ExpDate, string LotNum)[]
+            {
+                ("12", "Мочавина кислата", "мл", 26m, 5m, "2027-10-01", "0"),
+                ("43", "Гепатит ИФА", "шт.", 54m, 5m, "2027-10-01", "0"),
+                ("1", "Глюкоза", "мл", 84m, 5m, "2027-10-01", "1"),
+                ("39", "ЗППП-8 намуд", "шт.", 49m, 5m, "2027-10-01", ""),
+                ("2", "Холистерин", "мл", 162m, 5m, "2027-10-01", "2"),
+                ("14", "Калсий", "мл", 9m, 5m, "2027-10-01", "14"),
+                ("3", "Креатинин", "мл", 82m, 5m, "2027-10-01", "3"),
+                ("10", "Ш. Фосфатаза", "мл", 20m, 5m, "2027-10-01", "10"),
+                ("41", "Гепатит Д", "упак.", 82m, 5m, "2027-10-01", "0"),
+                ("20", "ЛГ", "шт.", 55m, 5m, "2027-10-01", "0"),
+                ("29", "Ляблия -Аскарида", "шт.", 62m, 5m, "2027-10-01", "0"),
+                ("27", "Т3", "мл", 89m, 5m, "2027-10-01", "0"),
+                ("28", "Т4", "мл", 79m, 5m, "2027-10-01", "0"),
+                ("4", "Мочавина", "мл", 79m, 5m, "2027-10-01", "4"),
+                ("49", "палича для мазок", "шт.", 9251m, 5m, "2027-10-02", "0"),
+                ("37", "ПРОБИРКА К", "шт.", 247m, 5m, "2027-10-01", "0"),
+                ("38", "Пробирка коаг", "шт.", 4m, 5m, "2027-10-01", "0"),
+                ("36", "Пробиркап ф", "шт.", 54m, 5m, "2027-10-01", ""),
+                ("15", "Калий", "мл", 20m, 5m, "2027-10-01", "15"),
+                ("32", "СА-125", "упак.", 46m, 5m, "2027-10-01", "0"),
+                ("21", "Пролактин", "шт.", 49m, 5m, "2027-10-01", "0"),
+                ("16", "Фосфор", "мл", 12m, 5m, "2027-10-01", "16"),
+                ("22", "Эстрадиол", "шт.", 80m, 5m, "2027-10-01", "0"),
+                ("30", "Пса обш", "шт.", 39m, 5m, "2027-10-01", "0"),
+                ("17", "РФ СрБ АсО", "мл", 71m, 5m, "2028-11-01", "257"),
+                ("18", "АБД(гурупа)", "мл", 116m, 5m, "2027-10-01", "18"),
+                ("24", "Тесестрон", "мл", 56m, 5m, "2027-10-01", "0"),
+                ("35", "Тест Геаптит В С ВМНО RW", "тест-полоски", 3702m, 5m, "2027-10-01", "0"),
+                ("33", "Тест моча", "тест-полоски", 83m, 5m, "2027-10-01", "0"),
+                ("7", "АлТ - АсТ", "мл", 106m, 5m, "2027-10-01", "7"),
+                ("5", "Албумин", "мл", 45m, 5m, "2027-10-01", "5"),
+                ("40", "АМГ", "шт.", 20m, 5m, "2027-10-01", "0"),
+                ("9", "Тимол", "мл", 8m, 5m, "2027-10-01", "9"),
+                ("26", "ТТГ", "шт.", 96m, 5m, "2027-10-01", "0"),
+                ("11", "Амилаза", "мл", 67m, 5m, "2027-10-01", "11"),
+                ("13", "АЧТВ МНО ФИБРИНОГЕН", "мл", 154m, 5m, "2027-10-01", "13"),
+                ("8", "Белок", "мл", 121m, 5m, "2027-10-01", "8"),
+                ("19", "ФСГ", "шт.", 57m, 5m, "2027-10-01", "1"),
+                ("31", "ХГЧ", "упак.", 78m, 5m, "2027-10-01", "0"),
+                ("6", "Билурубин", "мл", 19m, 5m, "2027-10-01", "6"),
+                ("25", "Витамин  Д", "упак.", 35m, 5m, "2027-10-01", "0"),
+                ("23", "Прогестерон", "шт.", 77m, 5m, "2027-10-01", "0")
+            };
+
+            foreach (var item in itemsData)
+            {
+                if (context.Materials.Any(m => m.Name == item.Name)) continue;
+
+                var u = item.UnitStr switch
+                {
+                    "мл" => unitMl,
+                    "шт." => unitPcs,
+                    "упак." => unitPack,
+                    "тест-полоски" => unitStrips,
+                    _ => unitPcs
+                };
+
+                var mat = new Material
+                {
+                    Name = item.Name,
+                    Article = item.Sku,
+                    Category = catBio,
+                    Unit = u,
+                    MinQuantity = item.MinQty,
+                    MaxQuantity = item.MinQty * 10,
+                    Supplier = sup,
+                    StorageLocation = "Основной склад",
+                    Description = "Клинический материал из базы данных лаборатории"
+                };
+
+                context.Materials.Add(mat);
+                context.SaveChanges();
+
+                DateTime expDate = DateTime.TryParse(item.ExpDate, out var dt) ? dt : DateTime.Today.AddYears(1);
+
+                var lot = new Lot
+                {
+                    MaterialId = mat.Id,
+                    LotNumber = string.IsNullOrWhiteSpace(item.LotNum) ? "LOT-01" : item.LotNum,
+                    InitialQuantity = item.Stock,
+                    CurrentQuantity = item.Stock,
+                    ReceivedDate = DateTime.Now.AddDays(-30),
+                    ExpiryDate = expDate,
+                    PurchasePrice = 10,
+                    Supplier = sup,
+                    StorageLocation = "Основной склад"
+                };
+
+                context.Lots.Add(lot);
+                context.SaveChanges();
             }
         }
     }
